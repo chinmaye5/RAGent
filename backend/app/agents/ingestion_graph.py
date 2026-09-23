@@ -5,10 +5,9 @@ from typing import List, Optional, TypedDict
 import json
 
 from langgraph.graph import END, StateGraph
-from psycopg2.extras import execute_values
 
 from app.core.config import settings
-from app.services.document_service import embedder, extract_pdf_text, get_conn, get_groq_client
+from app.services.document_service import embedder, extract_pdf_text, get_groq_client
 
 logger = logging.getLogger("ingestion_graph")
 
@@ -86,12 +85,31 @@ def chunk_node(state: IngestionState) -> dict:
 
 
 def enrich_node(state: IngestionState) -> dict:
-    """Batch chunks together so one LLM call handles many chunks, not one call per chunk."""
-    pending = [c for c in state["chunks"] if not c["context"]]
+
+    """Add context to each chunk."""
+
+    pending = []
+
+    # Find chunks that don't have context yet
+    for chunk in state["chunks"]:
+        if chunk["context"] == "":
+            pending.append(chunk)
+
     batch_size = 6
+
+    # Process 6 chunks at a time
     for i in range(0, len(pending), batch_size):
+
         batch = pending[i:i + batch_size]
-        chunk_list = "\n\n".join(f"[{c['chunk_index']}] {c['text']}" for c in batch)
+
+        chunk_list = ""
+
+        for chunk in batch:
+            chunk_list += (
+                f"[{chunk['chunk_index']}] "
+                f"{chunk['text']}\n\n"
+            )
+
         prompt = (
             f"Full document:\n{state['full_text'][:4000]}\n\n"
             f"Chunks:\n{chunk_list}\n\n"
@@ -99,74 +117,170 @@ def enrich_node(state: IngestionState) -> dict:
             'Reply with ONLY a JSON object like {"0": "...", "1": "..."} mapping '
             "each chunk's number to its sentence."
         )
-        reply = call_llm([{"role": "user", "content": prompt}])
+
+        reply = call_llm([
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ])
+
         notes = json.loads(reply)
-        for c in batch:
-            note = notes.get(str(c["chunk_index"]), "")
-            c["context"] = note
-            c["embedding"] = embedder.encode(f"{note}\n\n{c['text']}").tolist()
+
+        for chunk in batch:
+            number = str(chunk["chunk_index"])
+            note = notes.get(number, "")
+
+            chunk["context"] = note
+
+            chunk["embedding"] = embedder.encode(
+                f"{note}\n\n{chunk['text']}"
+            ).tolist()
+
     return {"chunks": state["chunks"]}
 
 
+
 def critic_node(state: IngestionState) -> dict:
-    """Worker 4: spot-check ~20% of chunks. Flags bad ones so enrich_node redoes just those."""
-    if not state["chunks"]:
-        return {"chunks": [], "retry_count": state.get("retry_count", 0) + 1}
-    sample = random.sample(state["chunks"], max(1, len(state["chunks"]) // 5))
-    logger.info("[INGESTION AGENT] Worker 4 (Critic): Spot-checking %d chunk(s) for quality...", len(sample))
+
+    """Check some chunks to see if their generated context is good."""
+
+    # If there are no chunks, return
+    if len(state["chunks"]) == 0:
+        retry_count = state.get("retry_count", 0)
+
+        return {
+            "chunks": [],
+            "retry_count": retry_count + 1
+        }
+
+    # Choose about 20% of the chunks
+    number_to_check = max(1, len(state["chunks"]) // 5)
+
+    sample = random.sample(
+        state["chunks"],
+        number_to_check
+    )
+
+    logger.info(
+        "[INGESTION AGENT] Worker 4 (Critic): Spot-checking %d chunk(s) for quality...",
+        len(sample)
+    )
+
     passed_count = 0
+
+    # Check each selected chunk
     for chunk in sample:
+
         prompt = (
-            f"Chunk: {chunk['text']}\nGenerated note: {chunk['context']}\n\n"
-            "Is this note accurate and is the chunk understandable on its own? Reply 'yes' or 'no'."
+            f"Chunk: {chunk['text']}\n"
+            f"Generated note: {chunk['context']}\n\n"
+            "Is this note accurate and is the chunk understandable "
+            "on its own? Reply 'yes' or 'no'."
         )
-        reply_text = call_llm([{"role": "user", "content": prompt}]).lower()
-        passed = "yes" in reply_text
+
+        reply = call_llm([
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ])
+
+        reply = reply.lower()
+
+        if "yes" in reply:
+            passed = True
+        else:
+            passed = False
+
         chunk["critic_passed"] = passed
+
         if passed:
             passed_count += 1
-        else:
-            chunk["context"] = ""  # blank it so enrich_node regenerates just this one
-            logger.warning("[INGESTION AGENT] Worker 4 (Critic): Chunk %d failed review. Flagged for re-enrichment.", chunk["chunk_index"])
-    logger.info("[INGESTION AGENT] Worker 4 (Critic): %d/%d spot-checked chunk(s) passed", passed_count, len(sample))
-    return {"chunks": state["chunks"], "retry_count": state.get("retry_count", 0) + 1}
 
+        else:
+            chunk["context"] = ""
+
+            logger.warning(
+                "[INGESTION AGENT] Worker 4 (Critic): "
+                "Chunk %d failed review. Flagged for re-enrichment.",
+                chunk["chunk_index"]
+            )
+
+    logger.info(
+        "[INGESTION AGENT] Worker 4 (Critic): %d/%d spot-checked chunk(s) passed",
+        passed_count,
+        len(sample)
+    )
+
+    retry_count = state.get("retry_count", 0)
+
+    return {
+        "chunks": state["chunks"],
+        "retry_count": retry_count + 1
+    }
 
 def needs_redo(state: IngestionState) -> str:
-    """The fork: any chunk failed, and haven't retried too many times yet?"""
-    failed = any(c["critic_passed"] is False for c in state["chunks"])
+
+    """Decide whether failed chunks should be processed again."""
+
+    failed = False
+
+    for chunk in state["chunks"]:
+        if chunk["critic_passed"] is False:
+            failed = True
+            break
+
     retries = state.get("retry_count", 0)
-    decision = "redo" if failed and retries < 2 else "done"
-    logger.info("[INGESTION AGENT] Conditional Edge (needs_redo): failed=%s, retry_count=%d -> Routing to '%s'", failed, retries, decision)
+
+    if failed and retries < 2:
+        decision = "redo"
+    else:
+        decision = "done"
+
+    logger.info(
+        "[INGESTION AGENT] Conditional Edge: failed=%s, retry_count=%d -> %s",
+        failed,
+        retries,
+        decision
+    )
+
     return decision
 
 
+from app.core.database import SessionSync
+from app.models.models import Document, Chunk as ChunkModel
+
+
 def persist_node(state: IngestionState) -> dict:
-    """Worker 5: save everything to Postgres."""
-    logger.info("[INGESTION AGENT] Worker 5 (Persist): Saving document metadata and %d chunk(s) to PostgreSQL...", len(state["chunks"]))
-    conn = get_conn()
-    cur = conn.cursor()
-    try:
-        cur.execute(
-            "insert into documents (filename, domain_type) values (%s, %s) returning doc_id",
-            (state["filename"], state["domain_type"]),
+    """Worker 5: save everything to Postgres using SQLAlchemy ORM (Synchronous session for LangGraph)."""
+    logger.info("[INGESTION AGENT] Worker 5 (Persist): Saving document metadata and %d chunk(s) via SQLAlchemy ORM...", len(state["chunks"]))
+    
+    with SessionSync() as session:
+        doc = Document(
+            filename=state["filename"],
+            domain_type=state["domain_type"]
         )
-        doc_id = cur.fetchone()[0]
-        rows = [
-            (doc_id, c["chunk_index"], c["content_type"], c["text"], c["context"], c["embedding"])
+        session.add(doc)
+        session.flush()  # Populates doc.doc_id
+        
+        chunk_models = [
+            ChunkModel(
+                doc_id=doc.doc_id,
+                chunk_index=c["chunk_index"],
+                content_type=c["content_type"],
+                text=c["text"],
+                context=c["context"],
+                embedding=c["embedding"],
+            )
             for c in state["chunks"]
         ]
-        execute_values(
-            cur,
-            "insert into chunks (doc_id, chunk_index, content_type, text, context, embedding) values %s",
-            rows,
-        )
-        conn.commit()
-    finally:
-        cur.close()
-        conn.close()
-    logger.info("[INGESTION AGENT] Worker 5 (Persist): Document successfully persisted with doc_id=%s", doc_id)
-    return {"doc_id": str(doc_id)}
+        session.add_all(chunk_models)
+        session.commit()
+        doc_id_str = str(doc.doc_id)
+
+    logger.info("[INGESTION AGENT] Worker 5 (Persist): Document successfully persisted with doc_id=%s", doc_id_str)
+    return {"doc_id": doc_id_str}
 
 
 builder = StateGraph(IngestionState)

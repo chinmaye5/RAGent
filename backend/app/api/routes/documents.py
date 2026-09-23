@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from app.agents.ingestion_graph import ingestion_graph
 from app.agents.query_graph import query_graph
 # Re-export helper functions for backwards compatibility
-from app.services.document_service import embedder, extract_pdf_text, get_conn, get_groq_client
+from app.services.document_service import embedder, extract_pdf_text, get_groq_client
 
 router = APIRouter()
 

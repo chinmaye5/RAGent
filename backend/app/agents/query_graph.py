@@ -3,10 +3,9 @@ import os
 from typing import List, TypedDict
 
 from langgraph.graph import END, StateGraph
-from psycopg2.extras import RealDictCursor
 
 from app.core.config import settings
-from app.services.document_service import embedder, get_conn, get_groq_client
+from app.services.document_service import embedder, get_groq_client
 
 logger = logging.getLogger("query_graph")
 
@@ -47,23 +46,27 @@ def format_context(chunks) -> str:
     return "\n\n".join(f"[Chunk {c['chunk_index']}] {c['text']}" for c in chunks)
 
 
+from sqlalchemy import select
+from app.core.database import SessionSync
+from app.models.models import Chunk as ChunkModel
+
+
 def retrieve_node(state: QueryState) -> dict:
-    """Worker 1: find the most relevant chunks for this question."""
+    """Worker 1: find the most relevant chunks for this question using SQLAlchemy ORM vector search."""
     limit = state.get("limit", 5)
     logger.info("[QUERY AGENT] Worker 1 (Retrieve): Searching top %d vector matching chunk(s) for doc_id=%s...", limit, state.get("doc_id"))
     query_embedding = embedder.encode([state["question"]])[0].tolist()
-    conn = get_conn()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    try:
-        cur.execute(
-            "select text, chunk_index from chunks where doc_id = %s "
-            "order by embedding <=> %s::vector limit %s",
-            (state["doc_id"], query_embedding, limit),
+
+    with SessionSync() as session:
+        stmt = (
+            select(ChunkModel.text, ChunkModel.chunk_index)
+            .where(ChunkModel.doc_id == state["doc_id"])
+            .order_by(ChunkModel.embedding.l2_distance(query_embedding))
+            .limit(limit)
         )
-        chunks = cur.fetchall()
-    finally:
-        cur.close()
-        conn.close()
+        res = session.execute(stmt)
+        chunks = [{"text": row.text, "chunk_index": row.chunk_index} for row in res.all()]
+
     logger.info("[QUERY AGENT] Worker 1 (Retrieve): Retrieved %d matching chunk(s)", len(chunks))
     return {"chunks": chunks}
 
