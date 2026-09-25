@@ -14,8 +14,14 @@ def get_embedder() -> SentenceTransformer:
     global _embedder_instance
     if _embedder_instance is None:
         os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-        _embedder_instance = SentenceTransformer("BAAI/bge-small-en-v1.5")
+        try:
+            # Load instantly from local cache without sending network requests to HuggingFace
+            _embedder_instance = SentenceTransformer("BAAI/bge-small-en-v1.5", local_files_only=True)
+        except Exception:
+            # Download model if not present in local cache yet
+            _embedder_instance = SentenceTransformer("BAAI/bge-small-en-v1.5")
     return _embedder_instance
+
 
 
 class LazyEmbedderProxy:

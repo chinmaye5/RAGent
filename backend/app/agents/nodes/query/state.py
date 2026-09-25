@@ -41,22 +41,11 @@ class QueryState(TypedDict):
 
 def call_llm(messages: list) -> str:
     """
-    Sends a list of prompt messages to the Groq LLM API.
-    If the default model fails, automatically tries a fallback model.
+    Sends prompt messages through the LLM Gateway (with automatic fallback routing & token tracking).
     """
-    client = get_groq_client()
-    model = os.environ.get("GROQ_MODEL") or settings.groq_model
-    try:
-        reply = client.chat.completions.create(model=model, messages=messages)
-        return reply.choices[0].message.content.strip()
-    except Exception as e:
-        if "openai/gpt-oss-120b" in model or "model_not_found" in str(e).lower():
-            reply = client.chat.completions.create(
-                model="meta-llama/llama-prompt-guard-2-22m",
-                messages=messages
-            )
-            return reply.choices[0].message.content.strip()
-        raise e
+    from app.core.gateway import call_llm_gateway
+    return call_llm_gateway(messages)
+
 
 
 def format_context(chunks: list) -> str:

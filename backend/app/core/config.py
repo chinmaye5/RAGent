@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
 
+
+
     @property
     def psycopg_db_url(self) -> str:
         url = self.supabase_db_url or self.database_url or os.environ.get("SUPABASE_DB_URL") or os.environ.get("DATABASE_URL", "")

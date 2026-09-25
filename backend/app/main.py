@@ -33,8 +33,12 @@ def root():
     return {"message": "Server running succesfully!"}
 
 
+from app.api.routes.gateway import router as gateway_router
+
 app.include_router(auth_router)
 app.include_router(chats_router)
+app.include_router(gateway_router)
 app.include_router(health_router)
 app.include_router(document_router)
 app.include_router(db_test_router)
+
