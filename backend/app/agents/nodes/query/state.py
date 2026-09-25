@@ -26,6 +26,7 @@ class QueryState(TypedDict):
     - grounded: True if answer is supported by text chunks, False otherwise
     - retry_count: Number of retries attempted so far
     - limit: How many chunks to fetch from the database
+    - query_type: Type of query ('chitchat' or 'rag')
     """
     doc_id: str
     question: str
@@ -34,6 +35,8 @@ class QueryState(TypedDict):
     grounded: bool
     retry_count: int
     limit: int
+    query_type: str
+
 
 
 def call_llm(messages: list) -> str:

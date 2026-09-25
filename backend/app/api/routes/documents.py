@@ -97,8 +97,9 @@ async def chat_with_pdf(
     result = query_graph.invoke(
         {"doc_id": req.doc_id, "question": req.question, "chunks": [], "retry_count": 0, "limit": 5}
     )
-    if not result.get("chunks"):
+    if not result.get("chunks") and not result.get("answer"):
         raise HTTPException(status_code=404, detail="No document found with that doc_id, or it has no chunks")
+
 
     answer_text = result["answer"]
 
