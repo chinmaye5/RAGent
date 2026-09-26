@@ -13,25 +13,77 @@ function Register() {
         e.preventDefault();
         setError("");
         try {
-            const res = await api.post("/auth/register", { name, email, password });
-            const token = typeof res.data === "string" ? res.data : res.data.access_token;
-            localStorage.setItem("token", token);
-            navigate("/dashboard");
-        } catch (err) {
+            await api.post("/auth/register", { name, email, password });
+            // After registering, log in automatically
+            const loginRes = await api.post("/auth/login", { email, password });
+            const token = loginRes.data.token;
+            if (token) localStorage.setItem("token", token);
+            navigate("/chat");
+        } catch {
             setError("Registration failed — email may already be in use");
         }
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>Register</h2>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" required />
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="Email" required />
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password" required />
-            <button type="submit">Register</button>
-            <p>Already have an account? <Link to="/login">Login</Link></p>
-        </form>
+        <div className="min-h-screen bg-cream flex items-center justify-center px-4">
+            <form
+                onSubmit={handleSubmit}
+                className="w-full max-w-[380px] flex flex-col gap-4"
+            >
+                <h2 className="text-[24px] font-semibold text-ink text-center mb-2">
+                    Create your account
+                </h2>
+
+                {error && (
+                    <p className="text-[13px] text-terracotta text-center">{error}</p>
+                )}
+
+                <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Name"
+                    required
+                    className="border border-border rounded-xl px-4 py-3 text-[15px] text-ink
+                               bg-cream outline-none focus:border-ink-muted transition-colors
+                               placeholder:text-ink-muted"
+                />
+                <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    placeholder="Email"
+                    required
+                    className="border border-border rounded-xl px-4 py-3 text-[15px] text-ink
+                               bg-cream outline-none focus:border-ink-muted transition-colors
+                               placeholder:text-ink-muted"
+                />
+                <input
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    type="password"
+                    placeholder="Password"
+                    required
+                    className="border border-border rounded-xl px-4 py-3 text-[15px] text-ink
+                               bg-cream outline-none focus:border-ink-muted transition-colors
+                               placeholder:text-ink-muted"
+                />
+
+                <button
+                    type="submit"
+                    className="bg-terracotta text-white rounded-xl px-4 py-3 text-[15px]
+                               font-medium hover:bg-terracotta-hover transition-colors cursor-pointer mt-1"
+                >
+                    Create account
+                </button>
+
+                <p className="text-[13px] text-ink-muted text-center">
+                    Already have an account?{" "}
+                    <Link to="/login" className="text-terracotta hover:underline">
+                        Sign in
+                    </Link>
+                </p>
+            </form>
+        </div>
     );
 }
 

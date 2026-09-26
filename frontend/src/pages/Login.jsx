@@ -13,26 +13,65 @@ function Login() {
         setError("");
         try {
             const res = await api.post("/auth/login", { email, password });
-            // Backend returns token under 'token' key
-            const token = typeof res.data === "string" ? res.data : res.data.token;
-            if (token) {
-                localStorage.setItem("token", token);
-            }
-            navigate("/dashboard");
-        } catch (err) {
+            const token = res.data.token;
+            if (token) localStorage.setItem("token", token);
+            navigate("/chat");
+        } catch {
             setError("Invalid email or password");
         }
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>Login</h2>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="Email" required />
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password" required />
-            <button type="submit">Login</button>
-            <p>No account? <Link to="/register">Register</Link></p>
-        </form>
+        <div className="min-h-screen bg-cream flex items-center justify-center px-4">
+            <form
+                onSubmit={handleSubmit}
+                className="w-full max-w-[380px] flex flex-col gap-4"
+            >
+                <h2 className="text-[24px] font-semibold text-ink text-center mb-2">
+                    Sign in to RAGent
+                </h2>
+
+                {error && (
+                    <p className="text-[13px] text-terracotta text-center">{error}</p>
+                )}
+
+                <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    placeholder="Email"
+                    required
+                    className="border border-border rounded-xl px-4 py-3 text-[15px] text-ink
+                               bg-cream outline-none focus:border-ink-muted transition-colors
+                               placeholder:text-ink-muted"
+                />
+                <input
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    type="password"
+                    placeholder="Password"
+                    required
+                    className="border border-border rounded-xl px-4 py-3 text-[15px] text-ink
+                               bg-cream outline-none focus:border-ink-muted transition-colors
+                               placeholder:text-ink-muted"
+                />
+
+                <button
+                    type="submit"
+                    className="bg-terracotta text-white rounded-xl px-4 py-3 text-[15px]
+                               font-medium hover:bg-terracotta-hover transition-colors cursor-pointer mt-1"
+                >
+                    Sign in
+                </button>
+
+                <p className="text-[13px] text-ink-muted text-center">
+                    No account?{" "}
+                    <Link to="/register" className="text-terracotta hover:underline">
+                        Create one
+                    </Link>
+                </p>
+            </form>
+        </div>
     );
 }
 
