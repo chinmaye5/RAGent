@@ -20,6 +20,7 @@ dependencies = [
     "psycopg2-binary>=2.9.13",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
+    "pyjwt>=2.15.0",
     "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
     "reportlab>=5.0.1",

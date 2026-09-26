@@ -6,6 +6,9 @@ class Settings(BaseSettings):
     supabase_db_url: str = ""
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
+    jwt_secret_key: str = os.environ.get("JWT_SECRET_KEY")
+    jwt_algorithm: str = "HS256"
+    jwt_expiration_hours: int = 24
 
 
 

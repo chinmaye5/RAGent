@@ -4,9 +4,12 @@ from app.agents.nodes.query.state import QueryState, SYSTEM_PROMPT, call_llm, fo
 logger = logging.getLogger("query_graph")
 
 
+from app.core.guardrails import process_model_output
+
 def answer_node(state: QueryState) -> dict:
     """
     Worker 2: Generate an answer using ONLY the retrieved context chunks.
+    Applies Output Guardrail for PII Masking.
     """
     chunks = state.get("chunks", [])
     logger.info(
@@ -27,7 +30,9 @@ def answer_node(state: QueryState) -> dict:
     ]
 
     # Generate answer using LLM
-    answer_text = call_llm(messages)
+    raw_answer = call_llm(messages)
+    answer_text = process_model_output(raw_answer)
     logger.info("[QUERY AGENT] Worker 2 (Answer): Generated answer (%d chars)", len(answer_text))
 
     return {"answer": answer_text}
+

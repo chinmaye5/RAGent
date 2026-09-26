@@ -11,13 +11,29 @@ FAST_ROUTER_PROMPT = (
 )
 
 
+from app.core.guardrails import process_user_input
+
 def router_node(state: QueryState) -> dict:
     """
     Router Agent: Quickly determines if the user query is simple conversational chitchat
     or requires full vector search & RAG retrieval.
+    Applies Guardrails (Prompt Injection detection & PII masking).
     """
-    question = state["question"].strip()
+    raw_question = state["question"].strip()
+
+    # Apply Input Guardrail
+    try:
+        question = process_user_input(raw_question)
+    except ValueError as err:
+        logger.warning("[GUARDRAILS] Blocked input: %s", err)
+        return {
+            "query_type": "chitchat",
+            "answer": "Security Notice: Your query was flagged for potential prompt injection or system override commands.",
+            "chunks": [],
+        }
+
     logger.info("[QUERY AGENT] Router: Classifying query intent for: '%s'", question)
+
 
     # Short circuit empty or ultra-short greetings instantly without LLM if obvious
     lower_q = question.lower().strip("!.,?")
