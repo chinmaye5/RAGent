@@ -23,8 +23,6 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #F4F1EA;
-  color: #1F1B16;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }

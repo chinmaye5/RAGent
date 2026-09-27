@@ -90,6 +90,11 @@ function ChatPage() {
     navigate("/chat");
   }
 
+  // --- Sidebar: go to dashboard ---
+  function handleNavigateToDashboard() {
+    navigate("/dashboard");
+  }
+
   // --- Sidebar: logout ---
   function handleLogout() {
     localStorage.removeItem("token");
@@ -179,6 +184,7 @@ function ChatPage() {
         onSelectChat={handleSelectChat}
         onNewChat={handleNewChat}
         onLogout={handleLogout}
+        onNavigateToDashboard={handleNavigateToDashboard}
       />
 
       {/* Right: Main chat area */}

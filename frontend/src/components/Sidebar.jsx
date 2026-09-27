@@ -4,7 +4,7 @@
 
 import { Plus, LogOut } from "lucide-react";
 
-function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLogout }) {
+function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLogout, onNavigateToDashboard }) {
   function getInitials(name) {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/);
@@ -98,10 +98,17 @@ function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLog
 
       {/* User footer */}
       <div className="px-4 py-3 border-t border-[#2E2C29] flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-full bg-[#2A2826] flex items-center justify-center text-[11px] font-medium text-[#EDEBE6] flex-shrink-0">
-          {getInitials(userName)}
-        </div>
-        <span className="text-[13px] text-[#B8B5AE] truncate flex-1">{userName || "User"}</span>
+        <button
+          onClick={onNavigateToDashboard}
+          title="View profile & dashboard"
+          className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-80 transition-opacity cursor-pointer text-left
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/50 rounded"
+        >
+          <div className="w-7 h-7 rounded-full bg-[#2A2826] flex items-center justify-center text-[11px] font-medium text-[#EDEBE6] flex-shrink-0">
+            {getInitials(userName)}
+          </div>
+          <span className="text-[13px] text-[#B8B5AE] truncate flex-1">{userName || "User"}</span>
+        </button>
         <button
           onClick={onLogout}
           aria-label="Log out"

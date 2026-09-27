@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import ChatPage from "./pages/ChatPage";
 import ProtectedRoute from "./ProtectedRoute";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
@@ -31,8 +32,15 @@ function App() {
           }
         />
 
-        {/* Redirect old /dashboard to /chat */}
-        <Route path="/dashboard" element={<Navigate to="/chat" />} />
+        {/* User Dashboard route */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
