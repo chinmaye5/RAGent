@@ -23,6 +23,7 @@ function ChatPage() {
   const [sending, setSending] = useState(false);      // true while waiting for AI reply
   const [file, setFile] = useState(null);             // selected PDF (not yet uploaded)
   const [uploading, setUploading] = useState(false);  // true while uploading PDF
+  const [loadingChat, setLoadingChat] = useState(false); // true while fetching past chat messages
 
   const navigate = useNavigate();
   const { chatId: urlChatId } = useParams();          // chat id from the URL (optional)
@@ -54,6 +55,7 @@ function ChatPage() {
 
   // --- Load messages for a specific chat ---
   async function loadChat(chatId) {
+    setLoadingChat(true);
     try {
       const res = await api.get(`/chats/${chatId}/messages`);
 
@@ -72,6 +74,8 @@ function ChatPage() {
       setActiveChatId(chatId);
     } catch (err) {
       console.error("Failed to load chat:", err);
+    } finally {
+      setLoadingChat(false);
     }
   }
 
@@ -203,6 +207,7 @@ function ChatPage() {
           messages={messages}
           sending={sending}
           uploading={uploading}
+          loadingChat={loadingChat}
           userName={user?.name}
         />
 

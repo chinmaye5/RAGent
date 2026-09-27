@@ -7,13 +7,29 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import LatticeLoader from "./LatticeLoader";
 
-function ChatMessages({ messages, sending, uploading, userName }) {
+function ChatMessages({ messages, sending, uploading, loadingChat, userName }) {
   const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, sending, uploading]);
+  }, [messages, sending, uploading, loadingChat]);
+
+  if (loadingChat) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
+        <LatticeLoader
+          status="working"
+          label="Loading conversation"
+          pattern="orbit"
+          grid={3}
+          color="#D97757"
+          showTimer={false}
+        />
+      </div>
+    );
+  }
 
   const isEmpty = messages.length === 0 && !sending && !uploading;
 
@@ -211,9 +227,15 @@ function AssistantMessage({ content, sources }) {
 // Shown while the PDF uploads and runs through ingestion (chunk -> enrich -> critic -> persist).
 function UploadingIndicator() {
   return (
-    <div className="flex items-center gap-2.5 text-[14px] text-[#8A867E]">
-      <Loader2 size={15} className="animate-spin motion-reduce:animate-none" />
-      <span>Uploading and indexing your PDF...</span>
+    <div className="py-2">
+      <LatticeLoader
+        status="working"
+        label="Uploading & indexing document"
+        pattern="sweep"
+        grid={3}
+        color="#D97757"
+        showTimer={true}
+      />
     </div>
   );
 }
@@ -221,10 +243,15 @@ function UploadingIndicator() {
 // Shown while waiting on the AI's answer
 function TypingIndicator() {
   return (
-    <div className="flex items-center gap-1.5 py-1">
-      <span className="w-1.5 h-1.5 bg-[#8A867E] rounded-full animate-pulse motion-reduce:animate-none" />
-      <span className="w-1.5 h-1.5 bg-[#8A867E] rounded-full animate-pulse [animation-delay:0.2s] motion-reduce:animate-none" />
-      <span className="w-1.5 h-1.5 bg-[#8A867E] rounded-full animate-pulse [animation-delay:0.4s] motion-reduce:animate-none" />
+    <div className="py-2">
+      <LatticeLoader
+        status="working"
+        label="Reasoning & retrieving context"
+        pattern="orbit"
+        grid={3}
+        color="#D97757"
+        showTimer={true}
+      />
     </div>
   );
 }

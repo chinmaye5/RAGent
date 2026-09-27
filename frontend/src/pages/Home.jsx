@@ -90,13 +90,6 @@ function HeroCTA() {
                 >
                     Open Chat
                 </Link>
-                <Link
-                    to="/dashboard"
-                    className="border-2 border-[#3D3A36] bg-[#191817]/80 text-[#FFFFFF] px-7 py-3 rounded-xl text-[15px]
-                             font-semibold hover:bg-[#242220] hover:border-[#E2876A]/40 transition-all transform hover:-translate-y-0.5 shadow-md"
-                >
-                    View Profile ({user.name})
-                </Link>
             </div>
         );
     }

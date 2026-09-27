@@ -2,7 +2,9 @@
 // Colors are hardcoded (not custom Tailwind tokens) so this renders correctly regardless
 // of your project's Tailwind config.
 
+import { Link } from "react-router-dom";
 import { Plus, LogOut } from "lucide-react";
+import logoImg from "../assets/logo.png";
 
 function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLogout, onNavigateToDashboard }) {
   function getInitials(name) {
@@ -37,11 +39,11 @@ function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLog
   return (
     <aside className="w-[260px] min-w-[260px] bg-[#141311] border-r border-[#2E2C29] flex flex-col h-screen">
       {/* Logo */}
-      <div className="px-4 pt-5 pb-3 flex items-center gap-2">
-        <div className="w-6 h-6 rounded-md bg-[#D97757] flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0">
-          R
-        </div>
-        <span className="text-[15px] font-semibold text-[#EDEBE6]">RAGent</span>
+      <div className="px-4 pt-5 pb-3">
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <img src={logoImg} alt="RAGent" className="w-7 h-7 object-contain rounded-md" />
+          <span className="text-[15px] font-semibold text-[#EDEBE6] group-hover:text-white transition-colors">RAGent</span>
+        </Link>
       </div>
 
       {/* New chat — full-width prominent CTA */}

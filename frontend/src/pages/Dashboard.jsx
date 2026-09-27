@@ -4,6 +4,8 @@ import { LogOut, ArrowLeft, MessageSquare, ChevronRight, Loader2 } from "lucide-
 import api from "../api";
 import Navbar from "../components/Navbar";
 
+import LatticeLoader from "../components/LatticeLoader";
+
 function Dashboard() {
     const [user, setUser] = useState(null);
     const [chats, setChats] = useState(null);
@@ -51,7 +53,14 @@ function Dashboard() {
     if (!user || !chats) {
         return (
             <div className="min-h-screen bg-[#191817] flex items-center justify-center">
-                <Loader2 size={20} className="text-[#8A867E] animate-spin motion-reduce:animate-none" />
+                <LatticeLoader
+                    status="working"
+                    label="Loading dashboard"
+                    pattern="orbit"
+                    grid={3}
+                    color="#D97757"
+                    showTimer={false}
+                />
             </div>
         );
     }

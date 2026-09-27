@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { LogOut, User, MessageSquare } from "lucide-react";
 import api from "../api";
 
+import logoImg from "../assets/logo.png";
+
 function Navbar() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,10 +50,8 @@ function Navbar() {
       <div className="max-w-[1100px] mx-auto px-6 h-16 flex items-center justify-between">
         {/* Brand logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-7 h-7 rounded-md bg-[#D97757] flex items-center justify-center text-white text-[13px] font-bold shadow-md group-hover:bg-[#C4653F] transition-colors">
-            R
-          </div>
-          <span className="text-[16px] font-semibold text-[#EDEBE6] tracking-tight">RAGent</span>
+          <img src={logoImg} alt="RAGent" className="w-7 h-7 object-contain rounded-md" />
+          <span className="text-[16px] font-semibold text-[#EDEBE6] tracking-tight group-hover:text-white transition-colors">RAGent</span>
         </Link>
 
         {/* Right side nav items */}
