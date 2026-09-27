@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { LogOut, ArrowLeft, MessageSquare, ChevronRight, Loader2 } from "lucide-react";
 import api from "../api";
+import Navbar from "../components/Navbar";
 
 function Dashboard() {
     const [user, setUser] = useState(null);
@@ -57,9 +58,10 @@ function Dashboard() {
 
     return (
         <div className="min-h-screen bg-[#191817]">
-            {/* Top bar */}
-            <header className="border-b border-[#2E2C29]">
-                <div className="max-w-[640px] mx-auto px-6 h-16 flex items-center justify-between">
+            <Navbar />
+
+            <div className="max-w-[640px] mx-auto px-6 py-10">
+                <div className="flex items-center justify-between mb-8">
                     <button
                         onClick={() => navigate("/chat")}
                         className="flex items-center gap-1.5 text-[14px] text-[#B8B5AE] hover:text-[#EDEBE6]
@@ -69,19 +71,7 @@ function Dashboard() {
                         <ArrowLeft size={15} />
                         Back to chats
                     </button>
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-1.5 text-[14px] text-[#8A867E] hover:text-[#EDEBE6]
-                                   transition-colors cursor-pointer
-                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/50 rounded"
-                    >
-                        <LogOut size={15} />
-                        Log out
-                    </button>
                 </div>
-            </header>
-
-            <div className="max-w-[640px] mx-auto px-6 py-12">
                 {/* Profile */}
                 <div className="flex items-center gap-4 mb-12">
                     <div className="w-16 h-16 rounded-full bg-[#2A2826] flex items-center justify-center text-[20px] font-semibold text-[#EDEBE6] flex-shrink-0">

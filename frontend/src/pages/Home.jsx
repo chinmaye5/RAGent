@@ -1,5 +1,8 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import LetterGlitch from "../components/LetterGlitch";
+import Navbar from "../components/Navbar";
+import api from "../api";
 
 const ingestionSteps = [
     { title: "Classify", description: "Reads the PDF and tags what kind of document it is." },
@@ -65,6 +68,59 @@ function PipelineFlow({ steps }) {
     );
 }
 
+function HeroCTA() {
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            api.get("/auth/me")
+                .then((res) => setUser(res.data))
+                .catch(() => setUser(null));
+        }
+    }, []);
+
+    if (user) {
+        return (
+            <div className="flex items-center justify-center gap-4">
+                <Link
+                    to="/chat"
+                    className="bg-[#D97757] text-white px-7 py-3 rounded-xl text-[15px] font-semibold
+                             hover:bg-[#C4653F] transition-all transform hover:-translate-y-0.5 shadow-lg shadow-[#D97757]/30"
+                >
+                    Open Chat
+                </Link>
+                <Link
+                    to="/dashboard"
+                    className="border-2 border-[#3D3A36] bg-[#191817]/80 text-[#FFFFFF] px-7 py-3 rounded-xl text-[15px]
+                             font-semibold hover:bg-[#242220] hover:border-[#E2876A]/40 transition-all transform hover:-translate-y-0.5 shadow-md"
+                >
+                    View Profile ({user.name})
+                </Link>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex items-center justify-center gap-4">
+            <Link
+                to="/register"
+                className="bg-[#D97757] text-white px-7 py-3 rounded-xl text-[15px] font-semibold
+                         hover:bg-[#C4653F] transition-all transform hover:-translate-y-0.5 shadow-lg shadow-[#D97757]/30"
+            >
+                Get started
+            </Link>
+            <Link
+                to="/login"
+                className="border-2 border-[#3D3A36] bg-[#191817]/80 text-[#FFFFFF] px-7 py-3 rounded-xl text-[15px]
+                         font-semibold hover:bg-[#242220] hover:border-[#E2876A]/40 transition-all transform hover:-translate-y-0.5 shadow-md"
+            >
+                Sign in
+            </Link>
+        </div>
+    );
+}
+
 function Home() {
     return (
         <div className="bg-[#191817] min-h-screen">
@@ -76,28 +132,7 @@ function Home() {
       `}</style>
 
             {/* Nav */}
-            <header className="sticky top-0 z-20 border-b border-[#2E2C29] bg-[#191817]/90 backdrop-blur">
-                <div className="max-w-[1100px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-[#D97757] flex items-center justify-center text-white text-[12px] font-bold">
-                            R
-                        </div>
-                        <span className="text-[15px] font-semibold text-[#EDEBE6]">RAGent</span>
-                    </div>
-                    <div className="flex items-center gap-5">
-                        <Link to="/login" className="text-[14px] text-[#B8B5AE] hover:text-[#EDEBE6] transition-colors">
-                            Sign in
-                        </Link>
-                        <Link
-                            to="/register"
-                            className="bg-[#D97757] text-white px-4 py-2 rounded-lg text-[14px] font-medium
-                         hover:bg-[#C4653F] transition-colors"
-                        >
-                            Get started
-                        </Link>
-                    </div>
-                </div>
-            </header>
+            <Navbar />
 
             {/* Hero */}
             <section className="relative px-6 pt-24 pb-20 md:pt-32 md:pb-28 overflow-hidden min-h-[520px] flex items-center justify-center">
@@ -124,22 +159,7 @@ function Home() {
                         answer against them before replying — so it tells you when it doesn't know, instead of
                         guessing.
                     </p>
-                    <div className="flex items-center justify-center gap-4">
-                        <Link
-                            to="/register"
-                            className="bg-[#D97757] text-white px-7 py-3 rounded-xl text-[15px] font-semibold
-                         hover:bg-[#C4653F] transition-all transform hover:-translate-y-0.5 shadow-lg shadow-[#D97757]/30"
-                        >
-                            Get started
-                        </Link>
-                        <Link
-                            to="/login"
-                            className="border-2 border-[#3D3A36] bg-[#191817]/80 text-[#FFFFFF] px-7 py-3 rounded-xl text-[15px]
-                         font-semibold hover:bg-[#242220] hover:border-[#E2876A]/40 transition-all transform hover:-translate-y-0.5 shadow-md"
-                        >
-                            Sign in
-                        </Link>
-                    </div>
+                    <HeroCTA />
                 </div>
             </section>
 
