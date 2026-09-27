@@ -2,16 +2,18 @@
 //
 // This is the only "smart" component — it holds all state and passes data
 // down to the child components via props. The children are pure display components.
+// Colors are hardcoded so this renders correctly regardless of your Tailwind config.
 
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { FileText } from "lucide-react";
 import api from "../api";
 import Sidebar from "../components/Sidebar";
 import ChatMessages from "../components/ChatMessages";
 import ChatInput from "../components/ChatInput";
 
 function ChatPage() {
-  // ─── State ───
+  // --- State ---
   const [user, setUser] = useState(null);            // logged-in user info { name, email }
   const [chats, setChats] = useState([]);             // list of all user's chats (sidebar)
   const [activeChatId, setActiveChatId] = useState(null);   // currently selected chat
@@ -25,7 +27,7 @@ function ChatPage() {
   const navigate = useNavigate();
   const { chatId: urlChatId } = useParams();          // chat id from the URL (optional)
 
-  // ─── Load user info + chat list on first render ───
+  // --- Load user info + chat list on first render ---
   useEffect(() => {
     async function init() {
       try {
@@ -43,23 +45,24 @@ function ChatPage() {
     init();
   }, [navigate]);
 
-  // ─── When URL changes to a specific chat, load its messages ───
+  // --- When URL changes to a specific chat, load its messages ---
   useEffect(() => {
     if (urlChatId && chats.length > 0) {
       loadChat(urlChatId);
     }
   }, [urlChatId, chats]);
 
-  // ─── Load messages for a specific chat ───
+  // --- Load messages for a specific chat ---
   async function loadChat(chatId) {
     try {
       const res = await api.get(`/chats/${chatId}/messages`);
 
-      // Backend returns [{ sender, text }] — map to { role, content }
+      // Backend returns [{ sender, text, sources }] — map to { role, content, sources }
       setMessages(
         res.data.map((m) => ({
           role: m.sender,
           content: m.text,
+          sources: m.sources || [],
         }))
       );
 
@@ -72,12 +75,12 @@ function ChatPage() {
     }
   }
 
-  // ─── Sidebar: click a chat ───
+  // --- Sidebar: click a chat ---
   function handleSelectChat(chatId) {
     navigate(`/chat/${chatId}`);
   }
 
-  // ─── Sidebar: start a new chat ───
+  // --- Sidebar: start a new chat ---
   function handleNewChat() {
     setActiveChatId(null);
     setActiveDocId(null);
@@ -87,13 +90,13 @@ function ChatPage() {
     navigate("/chat");
   }
 
-  // ─── Sidebar: logout ───
+  // --- Sidebar: logout ---
   function handleLogout() {
     localStorage.removeItem("token");
     navigate("/login");
   }
 
-  // ─── Send a message ───
+  // --- Send a message ---
   async function handleSend(e) {
     e.preventDefault();
     const trimmed = question.trim();
@@ -162,9 +165,11 @@ function ChatPage() {
     }
   }
 
-  // ─── Render ───
+  const activeChat = chats.find((c) => c.chat_id === activeChatId);
+
+  // --- Render ---
   return (
-    <div className="flex h-screen bg-cream">
+    <div className="flex h-screen bg-[#191817]">
 
       {/* Left: Sidebar */}
       <Sidebar
@@ -180,11 +185,10 @@ function ChatPage() {
       <main className="flex-1 flex flex-col min-w-0">
 
         {/* Header — shows chat title */}
-        <div className="px-6 py-3 border-b border-border">
-          <h3 className="text-[15px] font-medium text-ink">
-            {activeChatId
-              ? chats.find((c) => c.chat_id === activeChatId)?.title || "Chat"
-              : "New conversation"}
+        <div className="px-6 py-3 border-b border-[#2E2C29] flex items-center gap-2">
+          {activeChat && <FileText size={14} className="text-[#8A867E] flex-shrink-0" />}
+          <h3 className="text-[14px] font-medium text-[#EDEBE6] truncate">
+            {activeChatId ? activeChat?.title || "Chat" : "New conversation"}
           </h3>
         </div>
 
@@ -192,6 +196,7 @@ function ChatPage() {
         <ChatMessages
           messages={messages}
           sending={sending}
+          uploading={uploading}
           userName={user?.name}
         />
 

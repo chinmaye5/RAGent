@@ -86,6 +86,7 @@ def retrieve_node(state: QueryState) -> dict:
             stmt = (
                 select(
                     ChunkModel.text,
+                    ChunkModel.context,
                     ChunkModel.chunk_index
                 )
                 .where(
@@ -105,6 +106,7 @@ def retrieve_node(state: QueryState) -> dict:
                     seen_indexes.add(row.chunk_index)
                     chunks.append({
                         "text": row.text,
+                        "context": row.context or "",
                         "chunk_index": row.chunk_index
                     })
 

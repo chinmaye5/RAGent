@@ -124,6 +124,7 @@ async def get_chat_messages(
             "id": str(msg.id),
             "sender": msg.sender,
             "text": msg.text,
+            "sources": msg.sources,
             "created_at": msg.created_at.isoformat() if msg.created_at else None,
         }
         for msg in messages

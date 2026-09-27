@@ -102,15 +102,24 @@ async def chat_with_pdf(
 
 
     answer_text = result["answer"]
+    
+    formatted_sources = [
+        {
+            "chunk_index": c.get("chunk_index"),
+            "text": c.get("text"),
+            "context": c.get("context", "")
+        }
+        for c in result.get("chunks", [])
+    ]
 
     # Save assistant message to DB
-    assistant_msg = ChatMessage(chat_id=chat.id, sender="assistant", text=answer_text)
+    assistant_msg = ChatMessage(chat_id=chat.id, sender="assistant", text=answer_text, sources=formatted_sources)
     db.add(assistant_msg)
     await db.commit()
 
     return {
         "chat_id": str(chat.id),
         "answer": answer_text,
-        "sources": [c["chunk_index"] for c in result["chunks"]],
+        "sources": formatted_sources,
     }
 

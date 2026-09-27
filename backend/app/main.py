@@ -18,11 +18,17 @@ logging.basicConfig(
 )
 
 
+from sqlalchemy import text
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Automatically create missing database tables (users, chats, chat_messages) on startup
+    # Automatically create missing database tables on startup
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Migrate chat_messages table if sources column is missing
+        await conn.execute(
+            text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS sources JSON;")
+        )
     yield
 
 

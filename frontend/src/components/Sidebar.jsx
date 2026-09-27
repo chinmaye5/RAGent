@@ -1,67 +1,115 @@
-// Sidebar.jsx — Chat history list, new chat button, user info + logout
+// Sidebar.jsx — logomark, prominent "New chat" CTA, chats grouped by date, user footer.
+// Colors are hardcoded (not custom Tailwind tokens) so this renders correctly regardless
+// of your project's Tailwind config.
+
+import { Plus, LogOut } from "lucide-react";
 
 function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLogout }) {
-
-  // Format dates into readable labels
-  function formatDate(iso) {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const now = new Date();
-    const diffDays = Math.floor((now - d) / 86400000);
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return d.toLocaleDateString();
+  function getInitials(name) {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    return parts.length > 1
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : parts[0].slice(0, 2).toUpperCase();
   }
 
-  return (
-    <aside className="w-[260px] min-w-[260px] bg-sidebar border-r border-border flex flex-col h-screen">
+  function groupChatsByDate(list) {
+    const now = new Date();
+    const groups = { Today: [], Yesterday: [], "Previous 7 days": [], Older: [] };
 
-      {/* Top — app name + new chat button */}
-      <div className="px-4 pt-5 pb-3 flex items-center justify-between">
-        <span className="text-[15px] font-semibold text-ink">RAGent</span>
+    list.forEach((chat) => {
+      if (!chat.created_at) {
+        groups.Older.push(chat);
+        return;
+      }
+      const diffDays = Math.floor((now - new Date(chat.created_at)) / 86400000);
+      if (diffDays === 0) groups.Today.push(chat);
+      else if (diffDays === 1) groups.Yesterday.push(chat);
+      else if (diffDays < 7) groups["Previous 7 days"].push(chat);
+      else groups.Older.push(chat);
+    });
+
+    return Object.entries(groups).filter(([, items]) => items.length > 0);
+  }
+
+  const grouped = groupChatsByDate(chats);
+
+  return (
+    <aside className="w-[260px] min-w-[260px] bg-[#141311] border-r border-[#2E2C29] flex flex-col h-screen">
+      {/* Logo */}
+      <div className="px-4 pt-5 pb-3 flex items-center gap-2">
+        <div className="w-6 h-6 rounded-md bg-[#D97757] flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0">
+          R
+        </div>
+        <span className="text-[15px] font-semibold text-[#EDEBE6]">RAGent</span>
+      </div>
+
+      {/* New chat — full-width prominent CTA */}
+      <div className="px-3 pb-3">
         <button
           onClick={onNewChat}
-          className="bg-terracotta text-white text-[13px] font-medium px-3 py-1.5 rounded-lg
-                     hover:bg-terracotta-hover transition-colors cursor-pointer"
+          aria-label="Start a new chat"
+          className="w-full flex items-center justify-center gap-1.5 bg-[#D97757] text-white
+                     text-[13px] font-medium px-3 py-2 rounded-lg hover:bg-[#C4653F]
+                     transition-colors cursor-pointer
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/50"
         >
-          + New chat
+          <Plus size={14} />
+          New chat
         </button>
       </div>
 
-      {/* Chat list — scrollable */}
+      {/* Chat list, grouped by date */}
       <div className="flex-1 overflow-y-auto px-2 pb-3">
-        {chats.map((chat) => (
-          <div
-            key={chat.chat_id}
-            onClick={() => onSelectChat(chat.chat_id)}
-            className={`px-3 py-2.5 rounded-lg cursor-pointer mb-0.5 transition-colors
-              ${chat.chat_id === activeChatId ? "bg-hover" : "hover:bg-hover"}`}
-          >
-            <p className="text-[13px] text-ink truncate leading-snug">
-              {chat.title}
-            </p>
-            <p className="text-[11px] text-ink-muted mt-0.5">
-              {formatDate(chat.created_at)}
-            </p>
+        {grouped.map(([label, items]) => (
+          <div key={label} className="mb-4">
+            <p className="text-[11px] text-[#8A867E] px-3 mb-1">{label}</p>
+            {items.map((chat) => {
+              const active = chat.chat_id === activeChatId;
+              return (
+                <div
+                  key={chat.chat_id}
+                  onClick={() => onSelectChat(chat.chat_id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && onSelectChat(chat.chat_id)}
+                  className={`relative px-3 py-2 rounded-lg cursor-pointer mb-0.5 transition-colors
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/50
+                             ${active ? "bg-[#242220]" : "hover:bg-[#242220]"}`}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#D97757]" />
+                  )}
+                  <p className="text-[13px] text-[#EDEBE6] truncate leading-snug">{chat.title}</p>
+                </div>
+              );
+            })}
           </div>
         ))}
 
         {chats.length === 0 && (
-          <p className="text-[13px] text-ink-muted text-center mt-10">
-            No chats yet.<br />Upload a PDF to start!
+          <p className="text-[13px] text-[#8A867E] text-center mt-10 leading-relaxed">
+            No chats yet.
+            <br />
+            Upload a PDF to start!
           </p>
         )}
       </div>
 
-      {/* Bottom — user info + logout */}
-      <div className="px-4 py-3 border-t border-border flex items-center justify-between">
-        <span className="text-[13px] text-ink-light truncate">{userName || "User"}</span>
+      {/* User footer */}
+      <div className="px-4 py-3 border-t border-[#2E2C29] flex items-center gap-2.5">
+        <div className="w-7 h-7 rounded-full bg-[#2A2826] flex items-center justify-center text-[11px] font-medium text-[#EDEBE6] flex-shrink-0">
+          {getInitials(userName)}
+        </div>
+        <span className="text-[13px] text-[#B8B5AE] truncate flex-1">{userName || "User"}</span>
         <button
           onClick={onLogout}
-          className="text-[12px] text-ink-muted hover:text-ink transition-colors cursor-pointer"
+          aria-label="Log out"
+          title="Log out"
+          className="text-[#8A867E] hover:text-[#EDEBE6] transition-colors cursor-pointer
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/50 rounded"
         >
-          Log out
+          <LogOut size={15} />
         </button>
       </div>
     </aside>

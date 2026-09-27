@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, JSON, String, Text, func
 
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, relationship
@@ -64,6 +64,7 @@ class ChatMessage(Base):
     chat_id = Column(UUID(as_uuid=True), ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
     sender = Column(String(20), nullable=False)  # "user" or "assistant"
     text = Column(Text, nullable=False)
+    sources = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     chat = relationship("Chat", back_populates="messages")
