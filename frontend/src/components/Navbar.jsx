@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, User, MessageSquare } from "lucide-react";
+import { LogOut, User, MessageSquare, CircleChevronRight } from "lucide-react";
 import api from "../api";
 
 import logoImg from "../assets/logo.png";
@@ -90,7 +90,7 @@ function Navbar() {
                 aria-label="Log out"
                 className="text-[#8A867E] hover:text-[#EDEBE6] p-1.5 rounded-lg hover:bg-[#242220] transition-colors cursor-pointer"
               >
-                <LogOut size={16} />
+                <CircleChevronRight size={16} />
               </button>
             </div>
           ) : (

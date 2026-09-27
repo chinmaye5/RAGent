@@ -94,6 +94,23 @@ function ChatPage() {
     navigate("/chat");
   }
 
+  // --- Sidebar: delete a chat ---
+  async function handleDeleteChat(chatIdToDelete) {
+    if (!window.confirm("Are you sure you want to delete this conversation?")) return;
+
+    try {
+      await api.delete(`/chats/${chatIdToDelete}`);
+      setChats((prev) => prev.filter((c) => c.chat_id !== chatIdToDelete));
+
+      if (activeChatId === chatIdToDelete) {
+        handleNewChat();
+      }
+    } catch (err) {
+      console.error("Failed to delete chat:", err);
+      alert("Could not delete conversation.");
+    }
+  }
+
   // --- Sidebar: go to dashboard ---
   function handleNavigateToDashboard() {
     navigate("/dashboard");
@@ -187,6 +204,7 @@ function ChatPage() {
         userName={user?.name}
         onSelectChat={handleSelectChat}
         onNewChat={handleNewChat}
+        onDeleteChat={handleDeleteChat}
         onLogout={handleLogout}
         onNavigateToDashboard={handleNavigateToDashboard}
       />

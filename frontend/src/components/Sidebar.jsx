@@ -3,10 +3,11 @@
 // of your project's Tailwind config.
 
 import { Link } from "react-router-dom";
-import { Plus, LogOut } from "lucide-react";
+import { Plus, CircleChevronRight, Trash2 } from "lucide-react";
 import logoImg from "../assets/logo.png";
+import LatticeLoader from "./LatticeLoader";
 
-function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLogout, onNavigateToDashboard }) {
+function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onDeleteChat, onLogout, onNavigateToDashboard }) {
   function getInitials(name) {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/);
@@ -75,14 +76,26 @@ function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLog
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => e.key === "Enter" && onSelectChat(chat.chat_id)}
-                  className={`relative px-3 py-2 rounded-lg cursor-pointer mb-0.5 transition-colors
+                  className={`group relative px-3 py-2 rounded-lg cursor-pointer mb-0.5 transition-colors flex items-center justify-between gap-2
                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/50
                              ${active ? "bg-[#242220]" : "hover:bg-[#242220]"}`}
                 >
                   {active && (
                     <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#D97757]" />
                   )}
-                  <p className="text-[13px] text-[#EDEBE6] truncate leading-snug">{chat.title}</p>
+                  <p className="text-[13px] text-[#EDEBE6] truncate leading-snug flex-1">{chat.title}</p>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteChat(chat.chat_id);
+                    }}
+                    title="Delete chat"
+                    aria-label="Delete chat"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-[#8A867E] hover:text-[#E5484D] transition-all rounded hover:bg-[#2E2C29]"
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </div>
               );
             })}
@@ -91,9 +104,14 @@ function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLog
 
         {chats.length === 0 && (
           <p className="text-[13px] text-[#8A867E] text-center mt-10 leading-relaxed">
-            No chats yet.
-            <br />
-            Upload a PDF to start!
+            <LatticeLoader
+              status="working"
+              label="Loading conversation"
+              pattern="orbit"
+              grid={3}
+              color="#D97757"
+              showTimer={false}
+            />
           </p>
         )}
       </div>
@@ -118,7 +136,7 @@ function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onLog
           className="text-[#8A867E] hover:text-[#EDEBE6] transition-colors cursor-pointer
                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/50 rounded"
         >
-          <LogOut size={15} />
+          <CircleChevronRight size={15} />
         </button>
       </div>
     </aside>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { LogOut, ArrowLeft, MessageSquare, ChevronRight, Loader2 } from "lucide-react";
+import { LogOut, ArrowLeft, MessageSquare, Loader2, CircleChevronRight, Trash2 } from "lucide-react";
 import api from "../api";
 import Navbar from "../components/Navbar";
 
@@ -29,6 +29,19 @@ function Dashboard() {
     function handleLogout() {
         localStorage.removeItem("token");
         navigate("/login");
+    }
+
+    async function handleDeleteChat(e, chatIdToDelete) {
+        e.stopPropagation();
+        if (!window.confirm("Are you sure you want to delete this conversation?")) return;
+
+        try {
+            await api.delete(`/chats/${chatIdToDelete}`);
+            setChats((prev) => prev.filter((c) => c.chat_id !== chatIdToDelete));
+        } catch (err) {
+            console.error("Failed to delete chat:", err);
+            alert("Could not delete conversation.");
+        }
     }
 
     function getInitials(name) {
@@ -118,9 +131,17 @@ function Dashboard() {
                                         <MessageSquare size={15} className="text-[#8A867E] flex-shrink-0" />
                                         <span className="text-[14px] text-[#EDEBE6] truncate">{chat.title}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                    <div className="flex items-center gap-3.5 flex-shrink-0">
                                         <span className="text-[12px] text-[#8A867E]">{formatDate(chat.created_at)}</span>
-                                        <ChevronRight size={15} className="text-[#8A867E]" />
+                                        <button
+                                            onClick={(e) => handleDeleteChat(e, chat.chat_id)}
+                                            title="Delete chat"
+                                            aria-label="Delete chat"
+                                            className="p-1 text-[#8A867E] hover:text-[#E5484D] transition-colors rounded hover:bg-[#2E2C29]"
+                                        >
+                                            <Trash2 size={15} />
+                                        </button>
+                                        <CircleChevronRight size={15} className="text-[#8A867E]" />
                                     </div>
                                 </button>
                             ))}
