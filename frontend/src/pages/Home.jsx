@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import LetterGlitch from "../components/LetterGlitch";
 
 const ingestionSteps = [
     { title: "Classify", description: "Reads the PDF and tags what kind of document it is." },
@@ -99,30 +100,42 @@ function Home() {
             </header>
 
             {/* Hero */}
-            <section className="px-6 pt-24 pb-20 md:pt-32 md:pb-28">
+            <section className="relative px-6 pt-24 pb-20 md:pt-32 md:pb-28 overflow-hidden min-h-[520px] flex items-center justify-center">
+                <div className="absolute inset-0 z-0">
+                    <LetterGlitch
+                        glitchColors={['#D97757', '#E2876A', '#3A3430', '#252321']}
+                        glitchSpeed={60}
+                        centerVignette={true}
+                        outerVignette={true}
+                        smooth={true}
+                        backgroundColor="#191817"
+                    />
+                </div>
+
                 <div
-                    className="max-w-[640px] mx-auto text-center [animation:heroIn_0.6s_ease-out] motion-reduce:[animation:none]"
+                    className="relative z-10 max-w-[700px] mx-auto text-center [animation:heroIn_0.6s_ease-out] motion-reduce:[animation:none]"
                 >
-                    <h1 className="text-[34px] md:text-[44px] font-semibold text-[#EDEBE6] leading-[1.15] mb-5">
-                        Ask your documents anything. Get answers that check themselves.
+                    <h1 className="text-[36px] md:text-[48px] font-bold text-[#FFFFFF] leading-[1.15] mb-5 tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                        Ask your documents anything. <br className="hidden sm:inline" />
+                        <span className="text-[#E2876A]">Get answers that check themselves.</span>
                     </h1>
-                    <p className="text-[16px] text-[#B8B5AE] leading-relaxed mb-8 max-w-[520px] mx-auto">
+                    <p className="text-[16px] md:text-[17px] font-semibold text-[#FFFFFF] leading-relaxed mb-9 max-w-[580px] mx-auto drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                         Upload a PDF and RAGent reads it, retrieves the passages that matter, and verifies its own
                         answer against them before replying — so it tells you when it doesn't know, instead of
                         guessing.
                     </p>
-                    <div className="flex items-center justify-center gap-3">
+                    <div className="flex items-center justify-center gap-4">
                         <Link
                             to="/register"
-                            className="bg-[#D97757] text-white px-6 py-2.5 rounded-xl text-[14px] font-medium
-                         hover:bg-[#C4653F] transition-colors"
+                            className="bg-[#D97757] text-white px-7 py-3 rounded-xl text-[15px] font-semibold
+                         hover:bg-[#C4653F] transition-all transform hover:-translate-y-0.5 shadow-lg shadow-[#D97757]/30"
                         >
                             Get started
                         </Link>
                         <Link
                             to="/login"
-                            className="border border-[#2E2C29] text-[#B8B5AE] px-6 py-2.5 rounded-xl text-[14px]
-                         font-medium hover:bg-[#242220] transition-colors"
+                            className="border-2 border-[#3D3A36] bg-[#191817]/80 text-[#FFFFFF] px-7 py-3 rounded-xl text-[15px]
+                         font-semibold hover:bg-[#242220] hover:border-[#E2876A]/40 transition-all transform hover:-translate-y-0.5 shadow-md"
                         >
                             Sign in
                         </Link>
