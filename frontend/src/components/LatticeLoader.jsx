@@ -76,6 +76,7 @@ const LatticeLoader = ({
   grid = 3,
   shape = 'round',
   color = '#D97757',
+  textColor = '#22c55e',
   doneColor = '#22c55e',
   errorColor = '#ef4444',
   cellSize = 6,
@@ -138,6 +139,7 @@ const LatticeLoader = ({
         '--ll-gap': `${gap}px`,
         '--ll-font': `${fontSize}px`,
         '--ll-color': color,
+        '--ll-text-color': textColor,
         '--ll-mark': status === 'error' ? errorColor : doneColor,
         '--ll-idle': idleOpacity,
         '--ll-glow': glowColor || color,
@@ -176,7 +178,7 @@ const LatticeLoader = ({
           ))}
         </span>
       </span>
-      <span className="relative inline-block font-medium" aria-hidden="true">
+      <span className="relative inline-block font-medium [color:var(--ll-text-color)]" aria-hidden="true">
         <span
           className="ll-text absolute top-0 left-0 whitespace-nowrap opacity-0 [filter:blur(2px)] [transition:opacity_200ms_ease,filter_200ms_ease] data-[active]:static data-[active]:opacity-100 data-[active]:[filter:blur(0)]"
           data-active={status === 'working' ? '' : undefined}
@@ -199,7 +201,7 @@ const LatticeLoader = ({
       {showTimer ? (
         <span
           ref={timerRef}
-          className="font-mono tabular-nums opacity-60 [font-size:calc(var(--ll-font)*0.875)]"
+          className="font-mono tabular-nums opacity-80 [font-size:calc(var(--ll-font)*0.875)] [color:var(--ll-text-color)]"
           aria-hidden="true"
         >
           0.0s
