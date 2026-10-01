@@ -11,7 +11,7 @@ from sqlalchemy.future import select
 from app.agents.ingestion_graph import ingestion_graph
 from app.agents.query_graph import query_graph
 from app.api.routes.auth import get_current_user
-from app.core.database import get_db
+from app.core.database import get_db, SessionLocal
 from app.models.models import Chat, ChatMessage, User
 # Re-export helper functions for backwards compatibility
 from app.services.document_service import embedder, extract_pdf_text, get_groq_client
@@ -122,4 +122,105 @@ async def chat_with_pdf(
         "answer": answer_text,
         "sources": formatted_sources,
     }
+
+
+from fastapi.responses import StreamingResponse
+import json
+import asyncio
+
+@router.post("/chat/stream")
+async def chat_with_pdf_stream(
+    req: ChatRequest,
+    current_user_email: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Fetch logged in user
+    user_res = await db.execute(select(User).where(User.email == current_user_email))
+    user = user_res.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Find or create Chat session
+    chat = None
+    if req.chat_id:
+        try:
+            chat_uuid = uuid.UUID(req.chat_id)
+            chat_res = await db.execute(
+                select(Chat).where(Chat.id == chat_uuid, Chat.user_id == user.id)
+            )
+            chat = chat_res.scalars().first()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid chat_id format")
+
+    if not chat:
+        try:
+            doc_uuid = uuid.UUID(req.doc_id)
+        except ValueError:
+            doc_uuid = None
+
+        title = req.question[:30] + "..." if len(req.question) > 30 else req.question
+        chat = Chat(
+            user_id=user.id,
+            doc_id=doc_uuid,
+            title=title,
+        )
+        db.add(chat)
+        await db.commit()
+        await db.refresh(chat)
+
+    # Save user message to DB
+    user_msg = ChatMessage(chat_id=chat.id, sender="user", text=req.question)
+    db.add(user_msg)
+    await db.commit()
+
+    async def event_generator():
+        # Run LangGraph query graph in a thread pool to avoid blocking the event loop
+        result = await asyncio.to_thread(
+            query_graph.invoke,
+            {"doc_id": req.doc_id, "question": req.question, "chunks": [], "retry_count": 0, "limit": 5}
+        )
+
+        if not result.get("chunks") and not result.get("answer"):
+            yield json.dumps({"error": "No document found with that doc_id, or it has no chunks"}) + "\n"
+            return
+
+        answer_text = result.get("answer", "")
+        formatted_sources = [
+            {
+                "chunk_index": c.get("chunk_index"),
+                "text": c.get("text"),
+                "context": c.get("context", "")
+            }
+            for c in result.get("chunks", [])
+        ]
+
+        # Send initial metadata chunk (chat_id and sources)
+        yield json.dumps({
+            "type": "meta",
+            "chat_id": str(chat.id),
+            "sources": formatted_sources
+        }) + "\n"
+
+        # Stream answer token chunks accurately preserving space and newline formatting
+        import re
+        tokens = re.findall(r'\S+|\s+', answer_text)
+        for token in tokens:
+            yield json.dumps({"type": "token", "content": token}) + "\n"
+            await asyncio.sleep(0.015)
+
+        # Save assistant message to DB
+        async with SessionLocal() as save_db:
+            assistant_msg = ChatMessage(
+                chat_id=chat.id,
+                sender="assistant",
+                text=answer_text,
+                sources=formatted_sources
+            )
+            save_db.add(assistant_msg)
+            await save_db.commit()
+
+        yield json.dumps({"type": "done"}) + "\n"
+
+    return StreamingResponse(event_generator(), media_type="application/x-ndjson")
+
 

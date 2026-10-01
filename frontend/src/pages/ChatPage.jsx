@@ -157,20 +157,97 @@ function ChatPage() {
     setQuestion("");
     setSending(true);
 
+    // Add empty assistant placeholder message
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: "", sources: [] },
+    ]);
+
     try {
-      const res = await api.post("/chat", {
-        doc_id: docId,
-        question: trimmed,
-        chat_id: activeChatId || undefined,
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:8000/chat/stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          doc_id: docId,
+          question: trimmed,
+          chat_id: activeChatId || undefined,
+        }),
       });
 
-      const { answer, chat_id: returnedChatId, sources } = res.data;
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
 
-      // Add assistant reply
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: answer, sources: sources || [] },
-      ]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let returnedChatId = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // Keep partial line in buffer
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const data = JSON.parse(line);
+            if (data.error) {
+              throw new Error(data.error);
+            }
+            if (data.type === "meta") {
+              returnedChatId = data.chat_id;
+              setMessages((prev) => {
+                const next = [...prev];
+                const last = next[next.length - 1];
+                if (last && last.role === "assistant") {
+                  last.sources = data.sources || [];
+                }
+                return next;
+              });
+            } else if (data.type === "token") {
+              setMessages((prev) => {
+                const next = [...prev];
+                const last = { ...next[next.length - 1] };
+                if (last && last.role === "assistant") {
+                  last.content = (last.content || "") + data.content;
+                  next[next.length - 1] = last;
+                }
+                return next;
+              });
+            }
+          } catch (e) {
+            console.error("Error parsing stream line:", e);
+          }
+        }
+      }
+
+      // Flush remaining line in buffer if present
+      if (buffer.trim()) {
+        try {
+          const data = JSON.parse(buffer);
+          if (data.type === "token") {
+            setMessages((prev) => {
+              const next = [...prev];
+              const last = { ...next[next.length - 1] };
+              if (last && last.role === "assistant") {
+                last.content = (last.content || "") + data.content;
+                next[next.length - 1] = last;
+              }
+              return next;
+            });
+          }
+        } catch (e) {
+          // ignore incomplete trailing buffer
+        }
+      }
 
       // If this was a brand-new chat, update state and refresh sidebar
       if (!activeChatId && returnedChatId) {
@@ -182,10 +259,14 @@ function ChatPage() {
       }
     } catch (err) {
       console.error("Chat error:", err);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Something went wrong. Please try again." },
-      ]);
+      setMessages((prev) => {
+        const next = [...prev];
+        const last = next[next.length - 1];
+        if (last && last.role === "assistant" && !last.content) {
+          last.content = "Something went wrong. Please try again.";
+        }
+        return next;
+      });
     } finally {
       setSending(false);
     }
