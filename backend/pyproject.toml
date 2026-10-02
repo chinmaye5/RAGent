@@ -25,7 +25,8 @@ dependencies = [
     "python-multipart>=0.0.32",
     "reportlab>=5.0.1",
     "sentence-transformers>=6.1.0",
-    "sqlalchemy>=2.0.54",
+    "sqlalchemy[asyncio]>=2.0.54",
+    "greenlet>=3.0.0",
 ]
 
 [project.scripts]
