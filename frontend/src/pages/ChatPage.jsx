@@ -164,14 +164,15 @@ function ChatPage() {
     ]);
 
     try {
+      const token = localStorage.getItem("token");
       const baseUrl = (import.meta.env.VITE_API_BASE_URL || "https://ragentv2.onrender.com").replace(/\/$/, "");
       const response = await fetch(`${baseUrl}/chat/stream`, {
-
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : "",
         },
+
         body: JSON.stringify({
           doc_id: docId,
           question: trimmed,
