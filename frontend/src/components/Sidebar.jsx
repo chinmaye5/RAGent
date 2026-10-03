@@ -7,8 +7,9 @@ import { Plus, CircleChevronRight, Trash2 } from "lucide-react";
 import logoImg from "../assets/logo.png";
 import LatticeLoader from "./LatticeLoader";
 
-function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onDeleteChat, onLogout, onNavigateToDashboard }) {
+function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onDeleteChat, onLogout, onNavigateToDashboard, isOpen, onClose }) {
   function getInitials(name) {
+
     if (!name) return "?";
     const parts = name.trim().split(/\s+/);
     return parts.length > 1
@@ -38,7 +39,22 @@ function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onDel
   const grouped = groupChatsByDate(chats);
 
   return (
-    <aside className="w-[260px] min-w-[260px] bg-[#141311] border-r border-[#2E2C29] flex flex-col h-screen">
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm transition-opacity"
+        />
+      )}
+
+      {/* Sidebar Drawer */}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-[260px] min-w-[260px] bg-[#141311] border-r border-[#2E2C29] flex flex-col h-screen transform transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+
       {/* Logo */}
       <div className="px-4 pt-5 pb-3">
         <Link to="/" className="flex items-center gap-2.5 group">
@@ -140,6 +156,7 @@ function Sidebar({ chats, activeChatId, userName, onSelectChat, onNewChat, onDel
         </button>
       </div>
     </aside>
+    </>
   );
 }
 

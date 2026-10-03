@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FileText } from "lucide-react";
+import { FileText, Menu, Plus } from "lucide-react";
 import api from "../api";
 import Sidebar from "../components/Sidebar";
 import ChatMessages from "../components/ChatMessages";
@@ -24,6 +24,8 @@ function ChatPage() {
   const [file, setFile] = useState(null);             // selected PDF (not yet uploaded)
   const [uploading, setUploading] = useState(false);  // true while uploading PDF
   const [loadingChat, setLoadingChat] = useState(false); // true while fetching past chat messages
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // mobile drawer toggle
+
 
   const navigate = useNavigate();
   const { chatId: urlChatId } = useParams();          // chat id from the URL (optional)
@@ -81,11 +83,13 @@ function ChatPage() {
 
   // --- Sidebar: click a chat ---
   function handleSelectChat(chatId) {
+    setIsMobileSidebarOpen(false);
     navigate(`/chat/${chatId}`);
   }
 
   // --- Sidebar: start a new chat ---
   function handleNewChat() {
+    setIsMobileSidebarOpen(false);
     setActiveChatId(null);
     setActiveDocId(null);
     setMessages([]);
@@ -93,6 +97,7 @@ function ChatPage() {
     setFile(null);
     navigate("/chat");
   }
+
 
   // --- Sidebar: delete a chat ---
   async function handleDeleteChat(chatIdToDelete) {
@@ -290,18 +295,39 @@ function ChatPage() {
         onDeleteChat={handleDeleteChat}
         onLogout={handleLogout}
         onNavigateToDashboard={handleNavigateToDashboard}
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* Right: Main chat area */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 h-screen">
 
-        {/* Header — shows chat title */}
-        <div className="px-6 py-3 border-b border-[#2E2C29] flex items-center gap-2">
-          {activeChat && <FileText size={14} className="text-[#8A867E] flex-shrink-0" />}
-          <h3 className="text-[14px] font-medium text-[#EDEBE6] truncate">
-            {activeChatId ? activeChat?.title || "Chat" : "New conversation"}
-          </h3>
+        {/* Header — shows chat title + mobile menu button */}
+        <div className="px-4 md:px-6 py-3 border-b border-[#2E2C29] flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              aria-label="Open menu"
+              className="md:hidden p-1.5 -ml-1 text-[#8A867E] hover:text-[#EDEBE6] rounded-lg hover:bg-[#2A2826] transition-colors"
+            >
+              <Menu size={18} />
+            </button>
+            {activeChat && <FileText size={14} className="text-[#8A867E] flex-shrink-0 hidden sm:block" />}
+            <h3 className="text-[14px] font-medium text-[#EDEBE6] truncate">
+              {activeChatId ? activeChat?.title || "Chat" : "New conversation"}
+            </h3>
+          </div>
+
+          <button
+            onClick={handleNewChat}
+            aria-label="New chat"
+            className="md:hidden flex items-center gap-1 text-[12px] bg-[#D97757] text-white px-2.5 py-1 rounded-md font-medium hover:bg-[#C4653F] transition-colors"
+          >
+            <Plus size={13} />
+            <span>New</span>
+          </button>
         </div>
+
 
         {/* Messages area */}
         <ChatMessages

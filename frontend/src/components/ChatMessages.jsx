@@ -49,7 +49,8 @@ function ChatMessages({ messages, sending, uploading, loadingChat, userName }) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[720px] mx-auto px-6 py-8 flex flex-col gap-7">
+      <div className="max-w-[720px] mx-auto px-3 sm:px-6 py-4 sm:py-8 flex flex-col gap-5 sm:gap-7">
+
         {messages.map((msg, i) =>
           msg.role === "user" ? (
             <UserBubble key={i} content={msg.content} />

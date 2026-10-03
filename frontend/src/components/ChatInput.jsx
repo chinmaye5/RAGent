@@ -15,8 +15,9 @@ function ChatInput({ question, setQuestion, file, setFile, onSend, disabled }) {
   }
 
   return (
-    <div className="border-t border-[#2E2C29] bg-[#191817] px-6 py-4">
+    <div className="border-t border-[#2E2C29] bg-[#191817] px-3 sm:px-6 py-3 sm:py-4">
       <div className="max-w-[720px] mx-auto">
+
         {file && (
           <div className="inline-flex items-center gap-2 bg-[#2A2826] rounded-lg px-3 py-1.5 text-[12px] text-[#B8B5AE] mb-2">
             <Paperclip size={12} />
