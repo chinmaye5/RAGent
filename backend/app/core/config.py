@@ -2,9 +2,10 @@ from pydantic_settings import BaseSettings
 import os
 
 class Settings(BaseSettings):
-    database_url: str = ""
+    database_url: str = "sqlite+aiosqlite:///:memory:"
     supabase_db_url: str = ""
     groq_api_key: str = ""
+
     groq_model: str = "openai/gpt-oss-120b"
     jina_api_key: str = ""
     jwt_secret_key: str = os.environ.get("JWT_SECRET_KEY")
@@ -15,9 +16,10 @@ class Settings(BaseSettings):
 
     @property
     def psycopg_db_url(self) -> str:
-        url = self.supabase_db_url or self.database_url or os.environ.get("SUPABASE_DB_URL") or os.environ.get("DATABASE_URL", "")
-        url = url.replace("postgresql+asyncpg://", "postgresql://").replace("postgresql+psycopg://", "postgresql://")
+        url = self.supabase_db_url or self.database_url or os.environ.get("SUPABASE_DB_URL") or os.environ.get("DATABASE_URL", "sqlite:///:memory:")
+        url = url.replace("sqlite+aiosqlite://", "sqlite://").replace("postgresql+asyncpg://", "postgresql://").replace("postgresql+psycopg://", "postgresql://")
         return url
+
 
     model_config = {
         "env_file": ".env",
