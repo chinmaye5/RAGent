@@ -1,7 +1,13 @@
+from contextlib import asynccontextmanager
 from fastapi.testclient import TestClient
 
 from app.main import app
 
+@asynccontextmanager
+async def dummy_lifespan(app):
+    yield
+
+app.router.lifespan_context = dummy_lifespan
 client = TestClient(app)
 
 def test_health_endpoint():
@@ -13,3 +19,4 @@ def test_health_endpoint():
         "status": "OK",
         "message": "application is running"
     }
+
