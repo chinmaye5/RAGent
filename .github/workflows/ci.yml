@@ -38,6 +38,8 @@ jobs:
       - name: Run backend tests
         working-directory: backend
         run: uv run pytest
+        env:
+          jwt_secret_key: "sample-test-secret-key-for-ci"
 
 
   # -------------------------
