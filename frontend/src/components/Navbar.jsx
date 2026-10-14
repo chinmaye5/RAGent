@@ -5,10 +5,23 @@ import api from "../api";
 
 import logoImg from "../assets/logo.png";
 
+/* Shared styles so every control in the bar looks consistent */
+const focusRing =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E2876A]";
+
+const btnBase =
+  "inline-flex items-center justify-center gap-1.5 rounded-[1px] bg-[#D97757] font-semibold uppercase tracking-[0.06em] text-[#191817] " +
+  `transition-colors hover:bg-[#E2876A] ${focusRing}`;
+
+const iconBtn =
+  "rounded-[1px] border border-[#EDEBE6]/10 p-1.5 text-[#8A867E] transition-colors " +
+  `hover:border-[#EDEBE6]/25 hover:text-[#EDEBE6] ${focusRing}`;
+
 function Navbar() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +45,14 @@ function Navbar() {
     checkAuth();
   }, []);
 
+  /* Transparent at the top, solid once the page scrolls */
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   function handleLogout() {
     localStorage.removeItem("token");
     setUser(null);
@@ -48,26 +69,27 @@ function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#2E2C29] bg-[#191817]/90 backdrop-blur-md">
-      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <header
+      className={`sticky top-0 z-50 border-b transition-all duration-200 ${scrolled || mobileMenuOpen
+          ? "border-[#2E2C29] bg-[#191817]/95 backdrop-blur-sm"
+          : "border-transparent bg-transparent"
+        }`}
+    >
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
         {/* Brand logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <img src={logoImg} alt="RAGent" className="w-7 h-7 object-contain rounded-md" />
-          <span className="text-[16px] font-semibold text-[#EDEBE6] tracking-tight group-hover:text-white transition-colors">RAGent</span>
+        <Link to="/" className={`group flex items-center gap-2 ${focusRing}`}>
+          <img src={logoImg} alt="RAGent logo" className="h-6 w-6 rounded-[2px] object-contain" />
+          <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#EDEBE6]">RAGent</span>
         </Link>
 
-        {/* Desktop Right side nav items */}
-        <div className="hidden md:flex items-center gap-4">
+        {/* Desktop right side */}
+        <div className="hidden items-center gap-3 md:flex">
           {loading ? (
-            <div className="w-20 h-8 rounded-lg bg-[#242220] animate-pulse" />
+            <div className="h-8 w-24 animate-pulse rounded-[1px] bg-[#EDEBE6]/5" />
           ) : user ? (
-            <div className="flex items-center gap-3">
+            <>
               {/* Go to chat app */}
-              <Link
-                to="/chat"
-                className="flex items-center gap-1.5 bg-[#D97757] text-white px-3.5 py-1.5 rounded-lg text-[13px] font-medium
-                           hover:bg-[#C4653F] transition-all shadow-md hover:shadow-[#D97757]/20"
-              >
+              <Link to="/chat" className={`${btnBase} px-4 py-1.5 text-xs`}>
                 <MessageSquare size={14} />
                 <span>Open Chat</span>
               </Link>
@@ -75,105 +97,101 @@ function Navbar() {
               {/* Profile link */}
               <Link
                 to="/dashboard"
-                className="flex items-center gap-2 bg-[#242220] hover:bg-[#2E2C29] border border-[#2E2C29] px-3 py-1.5 rounded-lg
-                           text-[13px] font-medium text-[#EDEBE6] transition-colors"
                 title="View Profile & Dashboard"
+                className={`flex items-center gap-2 rounded-[1px] border border-[#EDEBE6]/10 px-3 py-1.5 text-xs font-medium text-[#EDEBE6]/80 transition-colors hover:border-[#EDEBE6]/25 hover:text-[#EDEBE6] ${focusRing}`}
               >
-                <div className="w-5 h-5 rounded-full bg-[#D97757]/20 text-[#E2876A] flex items-center justify-center text-[10px] font-bold">
+                <span className="flex h-5 w-5 items-center justify-center rounded-[1px] bg-[#D97757]/20 font-mono text-[10px] font-bold text-[#E2876A]">
                   {getInitials(user.name)}
-                </div>
+                </span>
                 <span className="max-w-[120px] truncate">{user.name}</span>
               </Link>
 
               {/* Logout button */}
               <button
+                type="button"
                 onClick={handleLogout}
                 title="Log out"
                 aria-label="Log out"
-                className="text-[#8A867E] hover:text-[#EDEBE6] p-1.5 rounded-lg hover:bg-[#242220] transition-colors cursor-pointer"
+                className={`${iconBtn} cursor-pointer`}
               >
                 <CircleChevronRight size={16} />
               </button>
-            </div>
+            </>
           ) : (
-            <div className="flex items-center gap-3">
+            <>
               <Link
                 to="/login"
-                className="text-[14px] text-[#B8B5AE] hover:text-[#EDEBE6] transition-colors font-medium px-2 py-1"
+                className={`rounded-[1px] px-3.5 py-1.5 text-xs font-medium text-[#B8B5AE] transition-colors hover:text-[#EDEBE6] ${focusRing}`}
               >
                 Sign in
               </Link>
-              <Link
-                to="/register"
-                className="bg-[#D97757] text-white px-4 py-2 rounded-lg text-[14px] font-medium
-                           hover:bg-[#C4653F] transition-colors shadow-md"
-              >
+              <Link to="/register" className={`${btnBase} px-4 py-1.5 text-xs`}>
                 Get started
               </Link>
-            </div>
+            </>
           )}
         </div>
 
-        {/* Mobile Controls */}
-        <div className="flex md:hidden items-center gap-2">
+        {/* Mobile controls */}
+        <div className="flex items-center gap-2 md:hidden">
           {!loading && user && (
-            <Link
-              to="/chat"
-              className="flex items-center gap-1 bg-[#D97757] text-white px-2.5 py-1.5 rounded-lg text-[12px] font-medium hover:bg-[#C4653F] transition-all"
-            >
+            <Link to="/chat" className={`${btnBase} px-3 py-1.5 text-[11px]`}>
               <MessageSquare size={13} />
               <span>Chat</span>
             </Link>
           )}
           <button
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-[#EDEBE6] p-2 rounded-lg hover:bg-[#242220] transition-colors"
+            className={`rounded-[1px] p-1.5 text-[#EDEBE6]/70 transition-colors hover:text-[#EDEBE6] ${focusRing}`}
             aria-label="Toggle mobile menu"
+            aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Dropdown Menu */}
+      {/* Mobile dropdown menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-[#2E2C29] bg-[#191817] px-6 py-4 space-y-3 shadow-xl">
+        <div className="space-y-3 border-t border-[#2E2C29] bg-[#141311] px-6 py-4 md:hidden">
           {loading ? (
-            <div className="w-full h-10 rounded-lg bg-[#242220] animate-pulse" />
+            <div className="h-10 w-full animate-pulse rounded-[1px] bg-[#EDEBE6]/5" />
           ) : user ? (
             <div className="flex flex-col space-y-3">
               <Link
                 to="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 bg-[#242220] border border-[#2E2C29] px-3.5 py-2.5 rounded-lg text-[14px] font-medium text-[#EDEBE6]"
+                className={`flex items-center gap-3 rounded-[1px] border border-[#2E2C29] px-3.5 py-2.5 text-sm font-medium text-[#EDEBE6] ${focusRing}`}
               >
-                <div className="w-6 h-6 rounded-full bg-[#D97757]/20 text-[#E2876A] flex items-center justify-center text-[11px] font-bold">
+                <span className="flex h-6 w-6 items-center justify-center rounded-[1px] bg-[#D97757]/20 font-mono text-[11px] font-bold text-[#E2876A]">
                   {getInitials(user.name)}
-                </div>
+                </span>
                 <span className="truncate">{user.name} (Dashboard)</span>
               </Link>
 
               <button
+                type="button"
                 onClick={handleLogout}
-                className="flex items-center justify-center gap-2 w-full bg-[#2E2C29] hover:bg-[#383531] text-[#EDEBE6] px-4 py-2.5 rounded-lg text-[14px] font-medium transition-colors"
+                className={`flex w-full items-center justify-center gap-2 rounded-[1px] border border-[#EDEBE6]/15 py-2.5 text-sm font-medium text-[#EDEBE6]/80 transition-colors hover:border-[#EDEBE6]/30 hover:text-[#EDEBE6] ${focusRing}`}
               >
                 <CircleChevronRight size={16} />
                 <span>Log out</span>
               </button>
             </div>
           ) : (
-            <div className="flex flex-col space-y-2.5 pt-1">
+            <div className="flex flex-col space-y-3">
               <Link
                 to="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center text-[14px] text-[#B8B5AE] hover:text-[#EDEBE6] transition-colors font-medium py-2 bg-[#242220] rounded-lg border border-[#2E2C29]"
+                className={`block py-2 text-sm text-[#B8B5AE] transition-colors hover:text-[#EDEBE6] ${focusRing}`}
               >
                 Sign in
               </Link>
               <Link
                 to="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center bg-[#D97757] text-white px-4 py-2.5 rounded-lg text-[14px] font-medium hover:bg-[#C4653F] transition-colors shadow-md"
+                className={`${btnBase} w-full py-2.5 text-sm`}
               >
                 Get started
               </Link>
